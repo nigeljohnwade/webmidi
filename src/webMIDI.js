@@ -7,15 +7,11 @@ const testForMidi = () => {
     }
 }
 function onMidiSuccess(midiAccess) {
-    // when we get a succesful response, run this code
-    midi = midiAccess; // this is our raw MIDI data, inputs, outputs, and sysex status
-
-    var inputs = midi.inputs.values();
-    // loop over all available inputs and listen for any MIDI input
-    for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
-        // each time there is a midi message call the onMIDIMessage function
+    const midi = midiAccess;
+    const inputs = midi.inputs.values();
+    for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
         input.value.onmidimessage = onMidiMessage;
-        console.log(input);
+        console.log(extractMeta(input.value));
     }
 }
 function onMidiFailure(e) {
@@ -26,7 +22,6 @@ function onMidiMessage(event) {
     if(event.data.length > 1) {
         extractMidiCommand(event.data);
     }
-    extractMeta(event);
 }
 function extractMidiCommand(data){
     raw = data[0];
@@ -36,14 +31,15 @@ function extractMidiCommand(data){
     note = data[1];
     frequency = midiNoteToStandardFrequency(note - 69);
     velocity = data[2];
+    
     console.log('MIDI data', {raw: raw,cmd: cmd, channel: channel, type: type, note: note,frequency: frequency, velocity: velocity});
 }
-function  extractMeta(event){
-    manufacturer = event.manufacturer;
-    name = event.name;
-    id = event.id;
-    console.log({manufacturer: manufacturer, name: name, id: id})
+function  extractMeta(input){
+    manufacturer = input.manufacturer;
+    name = input.name;
+    id = input.id;
+    return {manufacturer: manufacturer, name: name, id: id};
 }
 function midiNoteToStandardFrequency(note){
-    return 440 * Math.pow(2, (note)/12)
+    return 440 * Math.pow(2, (note)/12);
 }
