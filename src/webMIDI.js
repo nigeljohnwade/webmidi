@@ -15,17 +15,18 @@ function onMidiSuccess(midiAccess) {
     for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
         // each time there is a midi message call the onMIDIMessage function
         input.value.onmidimessage = onMidiMessage;
+        console.log(input);
     }
 }
 function onMidiFailure(e) {
     console.log("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + e);
     return false;
 }
-function onMidiMessage(message) {
-    if(message.data.length > 1) {
-        extractMidiCommand(message.data);
+function onMidiMessage(event) {
+    if(event.data.length > 1) {
+        extractMidiCommand(event.data);
     }
-    extractMeta(message);
+    extractMeta(event);
 }
 function extractMidiCommand(data){
     raw = data[0];
@@ -37,11 +38,10 @@ function extractMidiCommand(data){
     velocity = data[2];
     console.log('MIDI data', {raw: raw,cmd: cmd, channel: channel, type: type, note: note,frequency: frequency, velocity: velocity});
 }
-function  extractMeta(message){
-    debugger;
-    manufacturer = message.manufacturer;
-    name = message.name;
-    id = message.id;
+function  extractMeta(event){
+    manufacturer = event.manufacturer;
+    name = event.name;
+    id = event.id;
     console.log({manufacturer: manufacturer, name: name, id: id})
 }
 function midiNoteToStandardFrequency(note){
