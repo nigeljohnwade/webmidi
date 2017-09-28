@@ -11,7 +11,7 @@ const onMidiSuccess = (midiAccess) => {
     const inputs = midi.inputs.values();
     for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
         input.value.onmidimessage = onMidiMessage;
-        console.log(extractMeta(input.value));
+        console.log(extractMidiMeta(input.value));
     }
 }
 const onMidiFailure = (e) => {
@@ -20,7 +20,9 @@ const onMidiFailure = (e) => {
 }
 const onMidiMessage = (event) => {
     if(event.data.length > 1) {
-        extractMidiCommand(event.data);
+        console.log(extractMidiCommand(event.data));
+    }else if(event.data[0] > 248){//ignore clock for now
+        console.log(extractMidiRealtime(event.data));
     }
 }
 const extractMidiCommand = (data) => {
@@ -60,13 +62,39 @@ const extractMidiCommand = (data) => {
         note: note,
         cmdName: cmdName,
     };
-    console.log('MIDI data', { midiCommand });
+    return midiCommand;
 }
-const  extractMeta = (input) => {
+const extractMidiMeta = (input) => {
     manufacturer = input.manufacturer;
     name = input.name;
     id = input.id;
     return {manufacturer: manufacturer, name: name, id: id};
+}
+const extractMidiRealtime = (data) =>{
+    let realtimeMessage = '';
+    switch (data[0]){
+        case 248:
+            realtimeMessage = 'Clock';
+            break;
+        case 250:
+            realtimeMessage = 'Start';
+            break;
+        case 251:
+            realtimeMessage = 'Continue';
+            break;
+        case 252:
+            realtimeMessage = 'Stop';
+            break;
+        case 254:
+            realtimeMessage = 'ActiveSensing';
+            break;
+        case 255:
+            realtimeMessage = 'SystemReset';
+            break;
+        default:
+            realtimeMessage = 'Udefined';
+    }
+    return realtimeMessage;
 }
 const midiNoteToStandardFrequency = (note) => {
     return 440 * Math.pow(2, (note)/12);
@@ -74,6 +102,7 @@ const midiNoteToStandardFrequency = (note) => {
 const midiNoteNumberToNote = (noteNumber) =>{
     const note = `${noteArray[noteNumber % 12]}${Math.floor(noteNumber / 12)}`;
     console.log(note, noteNumber);
+    return note;
     
 }
 const noteArray = ['C', 'C#', 'D', 'D#',	'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
