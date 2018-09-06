@@ -1,121 +1,145 @@
-const testForMidi = () => {
-    if (navigator.requestMIDIAccess) {
-        navigator.requestMIDIAccess({})
-            .then(onMidiSuccess, onMidiFailure);
-    } else {
-        alert("No MIDI support in your browser.");
+export default class webMIDI{
+    constructor(){
+        this.testForMidi = this.testForMidi.bind(this);
+        this.onMidiMessage = this.onMidiMessage.bind(this);
+
+        this.noteArray = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        this.controllerObject = {
+            '1': 'ModWheel',
+            '2': 'BreathController',
+            '4': 'FootController',
+            '7': 'Volume',
+            '8': 'Balance',
+            '9': 'Pan',
+            '11': 'ExpressionController',
+        }
     }
-}
-const onMidiSuccess = (midiAccess) => {
-    const midi = midiAccess;
-    const inputs = midi.inputs.values();
-    for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
-        input.value.onmidimessage = onMidiMessage;
-        console.log(extractMidiMeta(input.value));
-    }
-}
-const onMidiFailure = (e) => {
-    console.log("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + e);
-    return false;
-}
-const onMidiMessage = (event) => {
-    if(event.data.length > 1) {
-        console.log(extractMidiCommand(event.data));
-    }else if(event.data[0] > 248){//ignore clock for now
-        console.log(extractMidiRealtime(event.data));
-    }
-}
-const extractMidiCommand = (data) => {
-    const raw = data[0];
-    const cmd = data[0] >> 4;
-    const channel = data[0] & 0xf;
-    const type = data[0] & 0xf0;
-    const data1 = data[1];
-    const data2 = data[2];
-    const frequency = cmd === 8 || cmd === 9 ? midiNoteToStandardFrequency(data1 - 69): null;
-    const note = cmd === 8 || cmd === 9 ? midiNoteNumberToNote(data1): null;
-    let cmdName = '';
-    switch (cmd){
-        case 8:
-            cmdName = 'noteOff';
-            break;
-        case 9:
-            cmdName = 'noteOn';
-            break;
-        case 11:
-            cmdName = `controller.${controllerObject[data1]}`;
-            break;
-        case 14:
-            cmdName = 'pitchBend';
-            break;
-        default:
-            cmdName = 'unknown';
-    }
-    const midiCommand = {
-        raw: raw,
-        cmd: cmd, 
-        channel: channel, 
-        type: type, 
-        data1: data1, 
-        data2: data2,
-        frequency: frequency,
-        note: note,
-        cmdName: cmdName,
-    };
-    return midiCommand;
-}
-const extractMidiMeta = (input) => {
-    manufacturer = input.manufacturer;
-    name = input.name;
-    id = input.id;
-    return {manufacturer: manufacturer, name: name, id: id};
-}
-const extractMidiRealtime = (data) =>{
-    let realtimeMessage = '';
-    switch (data[0]){
-        case 248:
-            realtimeMessage = 'Clock';
-            break;
-        case 250:
-            realtimeMessage = 'Start';
-            break;
-        case 251:
-            realtimeMessage = 'Continue';
-            break;
-        case 252:
-            realtimeMessage = 'Stop';
-            break;
-        case 254:
-            realtimeMessage = 'ActiveSensing';
-            break;
-        case 255:
-            realtimeMessage = 'SystemReset';
-            break;
-        default:
-            realtimeMessage = 'Udefined';
-    }
-    return realtimeMessage;
-}
-const midiNoteToStandardFrequency = (note) => {
-    return 440 * Math.pow(2, (note)/12);
-}
-const midiNoteNumberToNote = (noteNumber) =>{
-    const note = `${noteArray[noteNumber % 12]}${Math.floor(noteNumber / 12)}`;
-    console.log(note, noteNumber);
-    return note;
     
-}
-const noteArray = ['C', 'C#', 'D', 'D#',	'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const controllerObject = {
-    '1' : 'ModWheel',
-    '2' : 'BreathController',
-    '4' : 'FootController',
-    '7' : 'Volume',
-    '8' : 'Balance',
-    '9' : 'Pan',
-    '11' : 'ExpressionController'
+    testForMidi(){
+        if (navigator.requestMIDIAccess) {
+            navigator.requestMIDIAccess({})
+                .then((midi) => {
+                    return this.onMidiSuccess(midi);
+                },() =>{
+                    return this.onMidiFailure(midi);
+                });
+        } else {
+            alert("No MIDI support in your browser.");
+        }
+    }
+
+    onMidiSuccess(midiAccess){
+        const midi = midiAccess;
+        const inputs = midi.inputs.values();
+        this.inputs = {};
+        for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
+            input.value.onmidimessage = this.onMidiMessage;
+            this.inputs[this.extractMidiMeta(input.value).name] = this.extractMidiMeta(input.value);
+        }
+        console.log(this.inputs);
+        return this.inputs;
+    }
     
-}
+    onMidiFailure(e){
+        console.log("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + e);
+        return false;
+    }
+    
+    onMidiMessage(event){
+        if(event.data.length > 1) {
+            console.log(this.extractMidiCommand(event.data));
+        }else if(event.data[0] > 248){//ignore clock for now
+            console.log(this.extractMidiRealtime(event.data));
+        }
+    }
+    
+    extractMidiCommand(data){
+        const raw = data[0];
+        const cmd = data[0] >> 4;
+        const channel = data[0] & 0xf;
+        const type = data[0] & 0xf0;
+        const data1 = data[1];
+        const data2 = data[2];
+        const frequency = cmd === 8 || cmd === 9 ? this.midiNoteToStandardFrequency(data1 - 69): null;
+        const note = cmd === 8 || cmd === 9 ? this.midiNoteNumberToNote(data1): null;
+        let cmdName = '';
+        switch (cmd){
+            case 8:
+                cmdName = 'noteOff';
+                break;
+            case 9:
+                cmdName = 'noteOn';
+                break;
+            case 11:
+                cmdName = `controller.${this.controllerObject[data1]}`;
+                break;
+            case 14:
+                cmdName = 'pitchBend';
+                break;
+            default:
+                cmdName = 'unknown';
+        }
+        const midiCommand = {
+            raw: raw,
+            cmd: cmd, 
+            channel: channel, 
+            type: type, 
+            data1: data1, 
+            data2: data2,
+            frequency: frequency,
+            note: note,
+            cmdName: cmdName,
+        };
+        return midiCommand;
+    }
+    
+    extractMidiMeta(input){
+        const manufacturer = input.manufacturer;
+        const name = input.name;
+        const id = input.id;
+        return {manufacturer: manufacturer, name: name, id: id};
+    }
+    
+    extractMidiRealtime(data){
+        let realtimeMessage = '';
+        switch (data[0]){
+            case 248:
+                realtimeMessage = 'Clock';
+                break;
+            case 250:
+                realtimeMessage = 'Start';
+                break;
+            case 251:
+                realtimeMessage = 'Continue';
+                break;
+            case 252:
+                realtimeMessage = 'Stop';
+                break;
+            case 254:
+                realtimeMessage = 'ActiveSensing';
+                break;
+            case 255:
+                realtimeMessage = 'SystemReset';
+                break;
+            default:
+                realtimeMessage = 'Udefined';
+        }
+        return realtimeMessage;
+    }
+    
+    midiNoteToStandardFrequency(note){
+        return 440 * Math.pow(2, (note)/12);
+    }
+    
+    midiNoteNumberToNote(noteNumber){
+        const note = `${this.noteArray[noteNumber % 12]}${Math.floor(noteNumber / 12)}`;
+        console.log(note, noteNumber);
+        return note;
+    }
+    
+    
+    
+    
 // Name	Hex	Dec	Comments
 // Controller numbers 00 - 1f [0 - 31 decimal] are continuous, LSB (least significant byte)
 // Mod Wheel	01	1
@@ -161,3 +185,4 @@ const controllerObject = {
 // Omni Mode On	7D	125	Val must be 0
 // Mono Mode On	7E	126	Val = # of channels, or 0 if # channels equals # voices in receiver
 // Poly Mode On	7F	127	Val must be 0
+}
