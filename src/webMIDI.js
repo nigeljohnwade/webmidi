@@ -12,6 +12,10 @@ export default class webMIDI{
             '8': 'Balance',
             '9': 'Pan',
             '11': 'ExpressionController',
+            '16': 'GeneralPurpose',
+            '17': 'GeneralPurpose',
+            '18': 'GeneralPurpose',
+            '19': 'GeneralPurpose',
         }
     }
     
@@ -47,7 +51,9 @@ export default class webMIDI{
     
     onMidiMessage(event){
         if(event.data.length > 1) {
-            console.log(this.extractMidiCommand(event.data));
+            const eventData = this.extractMidiCommand(event.data);
+            const customEvent = new CustomEvent('midiMessage', { detail: eventData });
+            document.body.dispatchEvent(customEvent);
         }else if(event.data[0] > 248){//ignore clock for now
             console.log(this.extractMidiRealtime(event.data));
         }
