@@ -14,6 +14,7 @@ for(let i = 0; i < 128; i++){
 
 document.body.addEventListener('midiMessage', (event)=>{
     console.log(`${event.detail.cmdName} - note ${event.detail.data1} - velocity ${event.detail.data2}`);
+    const noteWrapper = document.querySelector('.note-wrapper');
     const noteDiv = document.querySelector(`.note-${event.detail.data1}`);
     const pitchBendDiv = document.querySelector('.pitch-bend');
     const modWheelDiv = document.querySelector('.mod-wheel');
@@ -25,7 +26,8 @@ document.body.addEventListener('midiMessage', (event)=>{
             noteDiv.style.width = `0px`;
             break;
         case 'pitchBend':
-            pitchBendDiv.style.transform = `rotate(${event.detail.data2}deg)`;
+            pitchBendDiv.style.transform = `rotate(${(360/127 * event.detail.data2) - 225}deg)`;
+            noteWrapper.style.transform = `rotate(${(36/127 * event.detail.data2)}deg)`;
             break;
         case 'controller.ModWheel':
             modWheelDiv.style.transform = `scale(${100/127 * event.detail.data2 * 0.01})`;
