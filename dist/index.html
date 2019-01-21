@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <style>
+        .flex-container{
+            display: flex;
+            height: 200px;
+            align-items: center;
+            justify-content: flex-start;
+        }
         .note-wrapper{
             position: relative;
             width: 200px;
@@ -547,9 +553,11 @@
     </style>
 </head>
 <body>
-<div class="note-wrapper"></div>
-<div class="pitch-bend"></div>
-<div class="mod-wheel"></div>
+<div class="flex-container">
+    <div class="note-wrapper"></div>
+    <div class="pitch-bend"></div>
+    <div class="mod-wheel"></div>
+</div>
 <script src="bundle.js" type="application/javascript"></script>
 <!--<script src="src/webMIDI.js" type="application/javascript"></script>-->
 <!--<script type="application/javascript">-->

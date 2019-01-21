@@ -1,0 +1,30 @@
+{
+  "name": "webmidi",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "babel src -d dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nigeljohnwade/webmidi.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nigeljohnwade/webmidi/issues"
+  },
+  "homepage": "https://github.com/nigeljohnwade/webmidi#readme",
+  "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.5",
+    "babel-preset-env": "^1.7.0",
+    "fetch-wrapper": "git+https://github.com/nigeljohnwade/fetch-wrapper.git",
+    "webpack": "^4.17.2",
+    "webpack-cli": "^3.1.0"
+  }
+}

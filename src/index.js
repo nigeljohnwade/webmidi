@@ -1,4 +1,5 @@
 import MIDI from './webMIDI';
+import { fetchGetFromAddress } from 'fetch-wrapper';
 
 const m = new MIDI();
 
