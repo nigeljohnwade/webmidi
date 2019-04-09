@@ -1,5 +1,5 @@
-export default class webMIDI{
-    constructor(){
+export default class webMIDI {
+    constructor() {
         this.testForMidi = this.testForMidi.bind(this);
         this.onMidiMessage = this.onMidiMessage.bind(this);
 
@@ -10,7 +10,7 @@ export default class webMIDI{
             '4': 'FootController',
             '7': 'Volume',
             '8': 'Balance',
-            '9': 'Pan',
+            '10': 'Pan',
             '11': 'ExpressionController',
             '16': 'GeneralPurpose',
             '17': 'GeneralPurpose',
@@ -18,58 +18,62 @@ export default class webMIDI{
             '19': 'GeneralPurpose',
         }
     }
-    
-    testForMidi(){
+
+    testForMidi() {
         if (navigator.requestMIDIAccess) {
             navigator.requestMIDIAccess({})
                 .then((midi) => {
                     return this.onMidiSuccess(midi);
-                },() =>{
-                    return this.onMidiFailure(midi);
+                }, (error) => {
+                    return this.onMidiFailure(error);
                 });
         } else {
             alert("No MIDI support in your browser.");
         }
     }
 
-    onMidiSuccess(midiAccess){
-        const midi = midiAccess;
+    onMidiSuccess(midi) {
         const inputs = midi.inputs.values();
+        const outputs = midi.outputs.values();
         this.inputs = {};
+        this.outputs = {};
         for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
             input.value.onmidimessage = this.onMidiMessage;
             this.inputs[this.extractMidiMeta(input.value).name] = this.extractMidiMeta(input.value);
         }
-        console.log(this.inputs);
-        return this.inputs;
+        for (let output = outputs.next(); output && !output.done; output = outputs.next()) {
+            this.outputs[this.extractMidiMeta(output.value).name] = this.extractMidiMeta(output.value);
+        }
+        console.log(this);
+        return {inputs: this.inputs, outputs: this.outputs};
     }
-    
-    onMidiFailure(e){
-        console.log("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + e);
+
+    onMidiFailure(error) {
+        console.log("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + error);
         return false;
     }
-    
-    onMidiMessage(event){
-        if(event.data.length > 1) {
+
+    onMidiMessage(event) {
+        if (event.data.length > 1) {
             const eventData = this.extractMidiCommand(event.data);
-            const customEvent = new CustomEvent('midiMessage', { detail: eventData });
+            const customEvent = new CustomEvent('midiMessage', {detail: eventData});
             document.body.dispatchEvent(customEvent);
-        }else if(event.data[0] > 248){//ignore clock for now
+        } else if (event.data[0] > 248) {//ignore clock for now
             console.log(this.extractMidiRealtime(event.data));
         }
     }
-    
-    extractMidiCommand(data){
+
+    extractMidiCommand(data) {
         const raw = data[0];
         const cmd = data[0] >> 4;
         const channel = data[0] & 0xf;
         const type = data[0] & 0xf0;
         const data1 = data[1];
         const data2 = data[2];
-        const frequency = cmd === 8 || cmd === 9 ? this.midiNoteToStandardFrequency(data1 - 69): null;
-        const note = cmd === 8 || cmd === 9 ? this.midiNoteNumberToNote(data1): null;
+        const frequency = cmd === 8 || cmd === 9 ? this.midiNoteToStandardFrequency(data1 - 69) : null;
+        const note = cmd === 8 || cmd === 9 ? this.midiNoteNumberToNote(data1) : null;
         let cmdName = '';
-        switch (cmd){
+        switch (cmd) {
             case 8:
                 cmdName = 'noteOff';
                 break;
@@ -87,10 +91,10 @@ export default class webMIDI{
         }
         const midiCommand = {
             raw: raw,
-            cmd: cmd, 
-            channel: channel, 
-            type: type, 
-            data1: data1, 
+            cmd: cmd,
+            channel: channel,
+            type: type,
+            data1: data1,
             data2: data2,
             frequency: frequency,
             note: note,
@@ -98,17 +102,17 @@ export default class webMIDI{
         };
         return midiCommand;
     }
-    
-    extractMidiMeta(input){
-        const manufacturer = input.manufacturer;
-        const name = input.name;
-        const id = input.id;
+
+    extractMidiMeta(device) {
+        const manufacturer = device.manufacturer;
+        const name = device.name;
+        const id = device.id;
         return {manufacturer: manufacturer, name: name, id: id};
     }
-    
-    extractMidiRealtime(data){
+
+    extractMidiRealtime(data) {
         let realtimeMessage = '';
-        switch (data[0]){
+        switch (data[0]) {
             case 248:
                 realtimeMessage = 'Clock';
                 break;
@@ -128,24 +132,22 @@ export default class webMIDI{
                 realtimeMessage = 'SystemReset';
                 break;
             default:
-                realtimeMessage = 'Udefined';
+                realtimeMessage = 'Undefined';
         }
         return realtimeMessage;
     }
-    
-    midiNoteToStandardFrequency(note){
-        return 440 * Math.pow(2, (note)/12);
+
+    midiNoteToStandardFrequency(note) {
+        return 440 * Math.pow(2, (note) / 12);
     }
-    
-    midiNoteNumberToNote(noteNumber){
+
+    midiNoteNumberToNote(noteNumber) {
         const note = `${this.noteArray[noteNumber % 12]}${Math.floor(noteNumber / 12)}`;
         console.log(note, noteNumber);
         return note;
     }
-    
-    
-    
-    
+
+
 // Name	Hex	Dec	Comments
 // Controller numbers 00 - 1f [0 - 31 decimal] are continuous, LSB (least significant byte)
 // Mod Wheel	01	1

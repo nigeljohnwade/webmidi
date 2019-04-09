@@ -1,11 +1,9 @@
-import MIDI from './webMIDI';
-import { fetchGetFromAddress } from 'fetch-wrapper';
+import WebMIDI from './webMIDI';
 
-const m = new MIDI();
+const webMidi = new WebMIDI();
 
-let x = m.testForMidi();
+let x = webMidi.testForMidi();
 
-console.log(x);
 for(let i = 0; i < 128; i++){
     let d = document.createElement('div');
     d.classList.add(`note-${i}`);
